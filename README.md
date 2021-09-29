@@ -3,8 +3,8 @@ a kafka pipeline that pipes B&W Mars rover pics through a colorization neural ne
 
 ## Codebase structure
 
-| Directory             |      Description                      |
-| :————————————————————:| :————————————————————————————————————:|
+| Directory              |      Description          |
+| :-------------------- | :-----------------------: |
 | [pushkin](pushkin)    | Consumes Mars API, pipes to kafka     |
 | [tbd](tbd)            | Deep learning lambdas                 |
 | [nabokov](nabokov)    | Twitter Bot                           |
