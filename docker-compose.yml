@@ -1,0 +1,10 @@
+version: "3"
+
+services:
+# todo
+
+# Give this composition access to the Kafka network
+networks:
+  default:
+    external:
+      name: kafka-network
