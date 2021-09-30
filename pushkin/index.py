@@ -24,17 +24,12 @@ def getImages():
     }
     r = requests.get(fReqUrl("curiosity", 2000))
     r = r.json()
-
+    # e.g. https://api.nasa.gov/mars-photos/api/v1/rovers/curiosity/photos?sol=2000&api_key=4RozxtnKON22hrUoBochiysqGKxp8Tmx4Zl7geIG
     res = [
         {"sol": i["sol"], "camera": i["camera"]["name"], "img_src": i["img_src"]}
         for i in r["photos"]
         if i["camera"]["name"] in whitelist
     ]
-    # res = [{
-    #   "sol": int
-    #   "camera": str
-    #   "img_src": str
-    # }...]
     return res
 
 # since this is a simple producer that sends data in batches to Kafka, i _should_ make it an executable script and

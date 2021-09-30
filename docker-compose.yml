@@ -12,6 +12,11 @@ services:
       KAFKA_BROKER_URL: broker:9092
       MARS_BW_TOPIC: queue.bwimg
       MARS_COLOR_TOPIC: stream.colorimg
+  nabokov:
+    build: ./nabokov
+    environment:
+      KAFKA_BROKER_URL: broker:9092
+      MARS_COLOR_TOPIC: stream.colorimg
 
 # Give this composition access to the Kafka network
 networks:
