@@ -1,7 +1,17 @@
 version: "3"
 
 services:
-# todo
+  pushkin:
+    build: ./pushkin
+    environment:
+      KAFKA_BROKER_URL: broker:9092
+      MARS_BW_TOPIC: queue.bwimg
+  tolstoy:
+    build: ./tolstoy
+    environment:
+      KAFKA_BROKER_URL: broker:9092
+      MARS_BW_TOPIC: queue.bwimg
+      MARS_COLOR_TOPIC: stream.colorimg
 
 # Give this composition access to the Kafka network
 networks:
