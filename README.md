@@ -1,4 +1,4 @@
-# marskafka
+# marskafka - blogpost soon! (lots of yummy diagrams included)
 a kafka pipeline that beams black and white Mars rover pics through [deoldify](https://github.com/jantic/DeOldify), a colorization neural network, and posts the results to twitter daily
 
 ## Codebase structure
