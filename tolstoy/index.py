@@ -33,7 +33,7 @@ if __name__ == '__main__':
         bootstrap_servers=KAFKA_BROKER_URL,
         value_serializer=lambda val: json.dumps(val).encode(),
     )
-    print('heello???', message)
+    print('heello???')
     for message in consumer:
         print("\n just consumed this: ", message.value)  # DEBUG
         r = deoldify(message.value['img_src'])
