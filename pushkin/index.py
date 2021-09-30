@@ -48,7 +48,7 @@ def main():
 
     producer = KafkaProducer(
         bootstrap_servers=KAFKA_BROKER_URL,
-        value_serializer=lambda val: json.dumps(v).encode(),
+        value_serializer=lambda val: json.dumps(val).encode(),
     )
 
     for i in getImages():
