@@ -2,6 +2,8 @@ import os
 import sched, time
 import json
 import requests
+from datetime import datetime
+from random import randint
 from dotenv import load_dotenv
 from kafka import KafkaProducer
 
@@ -24,7 +26,7 @@ def getImages():
     }
     r = requests.get(fReqUrl("curiosity", 2000))
     r = r.json()
-    # e.g. https://api.nasa.gov/mars-photos/api/v1/rovers/curiosity/photos?sol=2000&api_key=4RozxtnKON22hrUoBochiysqGKxp8Tmx4Zl7geIG
+    # e.g. https://api.nasa.gov/mars-photos/api/v1/rovers/curiosity/photos?sol=2000&api_key=
     res = [
         {"sol": i["sol"], "camera": i["camera"]["name"], "img_src": i["img_src"]}
         for i in r["photos"]
@@ -46,17 +48,24 @@ def main():
         value_serializer=lambda val: json.dumps(val).encode(),
     )
 
-    for i in getImages():
-        producer.send(MARS_BW_TOPIC, value=i)
-        print("line 62 in pushkin/index.py: ", i)
 
-    s.enter(5, 1, main)
+    r = getImages()
+    if len(r) > 0:
+        v = r[randint(0, len(r)-1)]
+    else:
+        v = []
+    print('res: ', r, v)
+    producer.send(MARS_BW_TOPIC, value=v)
+
+    # for i in getImages():
+    #     print("line 62 in pushkin/index.py: ", i)
+
+    s.enter(15, 1, main)
 
 
 if __name__ == "__main__":
     load_dotenv()
-    print("hello world!")
-
+    # run main event loop immediately
     s = sched.scheduler(time.time, time.sleep)
     s.enter(1, 1, main)
     s.run()
