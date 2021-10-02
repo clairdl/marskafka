@@ -54,7 +54,7 @@ if __name__ == "__main__":
         print(message.value)
 
         # TODO: hardcoded rover name
-        desc = "%s sols into curiosity's mission, we received this picture from the %s".format(
+        desc = "{} sols into curiosity's mission, we received this picture from its {} camera!".format(
             message.value["sol"], message.value["camera"]
         )
 
