@@ -5,7 +5,7 @@ Marskafka is a distributed kafka network with 3 docker-composed microservices th
 - `queue.bwimg` for greyscale images
 - `stream.colorimg` for RGB images
 2. An instance of the [deoldify](https://github.com/jantic/DeOldify) deep learning network listens to the greyscale queue, colorizes, and forwards to the colored queue
-3. Both topics will them merge at nabokov– where a twitter bot ranks images from the current epoch (daily) and tweets the "most interesting" one (this is subjective of course, but I'm currently ranking by image noise)
+3. Both topics will them merge at nabokov– where a [twitter bot](https://twitter.com/marskafka) ranks images from the current epoch (daily) and tweets the "most interesting" one (this is subjective of course, but I'm currently ranking by image noise)
 
 It was written for educational purposes to learn about Kafka, pub/sub models, and stream processing; it would be quite the comical example of over-engineering otherwise!
 
