@@ -1,66 +1,103 @@
 import os
-import sched, time
 import json
-import requests
-from datetime import datetime
+import sched, time
+from io import BytesIO
 from random import randint
+from datetime import datetime
+from temp_file import TemporaryFile
+
+import requests
+from PIL import Image
 from dotenv import load_dotenv
 from kafka import KafkaProducer
 
-# format url
-def fReqUrl(rover, sol):
-    return f"https://api.nasa.gov/mars-photos/api/v1/rovers/{rover}/photos?sol={sol}&api_key={os.getenv('NASA_API_KEY')}"
-
-
-# get images from nasa api and clean the response
-def getImages():
-    # TODO: better sampling from the api, support more cams and rovers
-    whitelist = {
-        "FHAZ",
-        "RHAZ",
-        "NAVCAM",
-        "PANCAM" "FRONT_HAZCAM_LEFT_A",
-        "FRONT_HAZCAM_RIGHT_A",
-        "REAR_HAZCAM_LEFT",
-        "REAR_HAZCAM_RIGHT",
-    }
-    r = requests.get(fReqUrl("curiosity", 2000))
-    r = r.json()
-    # e.g. https://api.nasa.gov/mars-photos/api/v1/rovers/curiosity/photos?sol=2000&api_key=
-    res = [
-        {"sol": i["sol"], "camera": i["camera"]["name"], "img_src": i["img_src"]}
-        for i in r["photos"]
-        if i["camera"]["name"] in whitelist
+# gets images from nasa api and filters out images from undesirable cameras
+def get_images():
+    rovers = [
+        {"name": "curiosity", "camera_whitelist": {"FHAZ", "RHAZ", "NAVCAM"}},
+        {
+            "name": "perseverance",
+            "camera_whitelist": {
+                "NAVCAM_LEFT",
+                "NAVCAM_RIGHT",
+                "FRONT_HAZCAM_LEFT_A",
+                "FRONT_HAZCAM_RIGHT_A",
+                "REAR_HAZCAM_LEFT",
+                "REAR_HAZCAM_RIGHT",
+            },
+        },
     ]
-    return res
+    filtered = []
 
-# since this is a simple producer that sends data in batches to Kafka, i _should_ make it an executable script and
-# schedule it with a cronjob... but i'm doing this to simulate a high-throughput service that produces lots of
-# data in streams, so i'm going to keep the thread alive with sched:
+    for rover in rovers:
+        # TODO: set req url to the 'latest photos' endpoint
+        res = requests.get(
+            "https://api.nasa.gov/mars-photos/api/v1/rovers/{}/photos?sol={}&api_key={}".format(
+                rover["name"], 1998, os.getenv("NASA_API_KEY")
+            )
+        )
+
+        res = res.json()
+        filtered.extend(
+            [
+                {
+                    "sol": i["sol"],
+                    "camera": i["camera"]["name"],
+                    "img_src": i["img_src"]
+                }
+                for i in res
+                if i["camera"]["name"] in rover["camera_whitelist"]
+            ]
+        )
+
+    return filtered
+
+
+def is_greyscale_probable(img):
+    r = requests.get(img["img_src"], stream=True)
+    img = Image.open(BytesIO(r.content))
+
+    pix = img.load()
+    print(img.size)  # Get the width and hight of the image for iterating over
+    print(pix[x, y])  # Get the RGBA Value of the a pixel of an image
+    pix[x, y] = value  # Set the RGBA Value of the image (tuple)
+
+    x, y = img.size
+    x_step = x // 4
+    y_step = y // 4
+
+    # samples 9 pixels from the points of a grid: ((x//4 + y//4) - 1)^2 = 9
+    for i in range(x_step, x, x_step):
+        for j in range(y_step, y, y_step):
+            r, g, b = img.getpixel((i, j))
+            if r != g or g != b:
+                return False
+    return True
+
+
+# since this is a simple producer that produces daily batches i _should_ make it an executable and schedule it with a cronjob, but i'm doing this to simulate a high-throughput data stream thus i'm going to keep the thread alive with sched:
 # see: https://stackoverflow.com/a/93179
 # tldr: if you pass time.sleep as the delayfunc, it blocks the thread
 def main():
     KAFKA_BROKER_URL = os.environ.get("KAFKA_BROKER_URL")
     MARS_BW_TOPIC = os.environ.get("MARS_BW_TOPIC")
+    MARS_COLOR_TOPIC = os.environ.get("MARS_COLOR_TOPIC")
 
     producer = KafkaProducer(
         bootstrap_servers=KAFKA_BROKER_URL,
         value_serializer=lambda val: json.dumps(val).encode(),
     )
 
+    images = get_images()
 
-    r = getImages()
-    if len(r) > 0:
-        v = r[randint(0, len(r)-1)]
-    else:
-        v = []
-    print('res: ', r, v)
-    producer.send(MARS_BW_TOPIC, value=v)
+    for i in images:
+        if is_greyscale_probable(i) == True:
+            producer.send(MARS_BW_TOPIC, value=i)
+        else:
+            producer.send(MARS_COLOR_TOPIC, value=i)
+    print("res: ", images, v)
 
-    # for i in getImages():
-    #     print("line 62 in pushkin/index.py: ", i)
-
-    s.enter(15, 1, main)
+    s.enter(15, 1, main)  # TODO: set timer to once per day
 
 
 if __name__ == "__main__":
