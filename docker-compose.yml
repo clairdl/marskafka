@@ -6,6 +6,7 @@ services:
     environment:
       KAFKA_BROKER_URL: broker:9092
       MARS_BW_TOPIC: queue.bwimg
+      MARS_COLOR_TOPIC: stream.colorimg
   tolstoy:
     build: ./tolstoy
     environment:
