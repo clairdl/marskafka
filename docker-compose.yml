@@ -18,7 +18,7 @@ services:
       KAFKA_BROKER_URL: broker:9092
       MARS_COLOR_TOPIC: stream.colorimg
 
-# Give this composition access to the Kafka network
+# give this cluster access to kafka-network
 networks:
   default:
     external:

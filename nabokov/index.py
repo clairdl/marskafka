@@ -1,6 +1,9 @@
 import os
+import json
 import tweepy
+import requests
 from dotenv import load_dotenv
+from kafka import KafkaConsumer
 
 
 def getApiInstance():
@@ -8,32 +11,30 @@ def getApiInstance():
     consumer_secret = os.getenv("TWT_CONSUMER_KEY_SECRET")
     access_token = os.getenv("TWT_ACCESS_TOKEN")
     access_token_secret = os.getenv("TWT_ACCESS_TOKEN_SECRET")
-    print(consumer_key, type(consumer_key))
 
     auth = tweepy.OAuthHandler(consumer_key, consumer_secret)
     auth.set_access_token(access_token, access_token_secret)
     return tweepy.API(auth)
 
-def tweetImg(src, text):
-    filename = f"{imgid}.jpg"
-    imgid += 1
+
+def tweetImg(src, desc, api, id):
+    filename = "%s.jpg".format(id)
+    # download the image locally
     r = requests.get(src, stream=True)
     if r.status_code == 200:
-        file = open(filename, "wb")
-        try:
+        with open(filename, "wb") as file:
             for chunk in r:
                 file.write(chunk)
-        finally:
-            file.close()
-
-        api.update_with_media(
-            filename, status=f"tweeting live from warm and sunny colorado!"
-        )
+        # tweet & delete ( ͡° ͜ʖ ͡°)
+        media = api.simple_upload(filename)
         os.remove(filename)
+        print(media)
+        api.update_status(desc, media_ids=[media.media_id])
     else:
-        print("image download failed, src: ", src)
+        print("failed to tweet image: ", src)
 
 
+print("hi0")
 if __name__ == "__main__":
     # init env
     load_dotenv()
@@ -42,13 +43,24 @@ if __name__ == "__main__":
 
     HANDLE = "marskafka"
     api = getApiInstance()
-    imgid = 0
 
     consumer = KafkaConsumer(
         MARS_COLOR_TOPIC,
         bootstrap_servers=KAFKA_BROKER_URL,
         value_deserializer=lambda val: json.loads(val),
     )
-
+    print("hi1")
     for message in consumer:
         print(message.value)
+
+        # TODO: hardcoded rover name
+        desc = "%s sols into curiosity's mission, we received this picture from the %s".format(
+            message.value["sol"], message.value["camera"]
+        )
+
+        tweetImg(
+            message.value["img_info"]["output_url"],
+            desc,
+            api,
+            message.value["img_info"]["id"],
+        )
