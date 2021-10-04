@@ -95,7 +95,7 @@ def main():
         else:
             producer.send(MARS_COLOR_TOPIC, value=i)
             print("\nSENT TO TOPIC.COLOR:\n", i)
-    # print("res: ", images, v)
+        break
 
     s.enter(15, 1, main)  # TODO: set timer to once per day
 
