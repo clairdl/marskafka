@@ -4,7 +4,6 @@ import sched, time
 from io import BytesIO
 from random import randint
 from datetime import datetime
-from temp_file import TemporaryFile
 
 import requests
 from PIL import Image
@@ -38,6 +37,7 @@ def get_images():
         )
 
         res = res.json()
+        
         filtered.extend(
             [
                 {
@@ -45,7 +45,7 @@ def get_images():
                     "camera": i["camera"]["name"],
                     "img_src": i["img_src"]
                 }
-                for i in res
+                for i in res["photos"]
                 if i["camera"]["name"] in rover["camera_whitelist"]
             ]
         )
@@ -56,11 +56,7 @@ def get_images():
 def is_greyscale_probable(img):
     r = requests.get(img["img_src"], stream=True)
     img = Image.open(BytesIO(r.content))
-
-    pix = img.load()
-    print(img.size)  # Get the width and hight of the image for iterating over
-    print(pix[x, y])  # Get the RGBA Value of the a pixel of an image
-    pix[x, y] = value  # Set the RGBA Value of the image (tuple)
+    img_rbg = img.convert("RGB")
 
     x, y = img.size
     x_step = x // 4
@@ -69,7 +65,8 @@ def is_greyscale_probable(img):
     # samples 9 pixels from the points of a grid: ((x//4 + y//4) - 1)^2 = 9
     for i in range(x_step, x, x_step):
         for j in range(y_step, y, y_step):
-            r, g, b = img.getpixel((i, j))
+            print(x, i, y, j, img_rbg.getpixel((i,j)))
+            r, g, b = img_rbg.getpixel((i, j))
             if r != g or g != b:
                 return False
     return True
@@ -92,10 +89,12 @@ def main():
 
     for i in images:
         if is_greyscale_probable(i) == True:
+            print("\nSENT TO TOPIC.BW:\n", i)
             producer.send(MARS_BW_TOPIC, value=i)
         else:
+            print("\nSENT TO TOPIC.COLOR:\n", i)
             producer.send(MARS_COLOR_TOPIC, value=i)
-    print("res: ", images, v)
+    # print("res: ", images, v)
 
     s.enter(15, 1, main)  # TODO: set timer to once per day
 
