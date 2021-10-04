@@ -41,9 +41,10 @@ def get_images():
         filtered.extend(
             [
                 {
+                    "rover_name": i["rover"]["name"],
                     "sol": i["sol"],
                     "camera": i["camera"]["name"],
-                    "img_src": i["img_src"]
+                    "img_src": i["img_src"],
                 }
                 for i in res["photos"]
                 if i["camera"]["name"] in rover["camera_whitelist"]
@@ -89,11 +90,11 @@ def main():
 
     for i in images:
         if is_greyscale_probable(i) == True:
-            print("\nSENT TO TOPIC.BW:\n", i)
             producer.send(MARS_BW_TOPIC, value=i)
+            print("\nSENT TO TOPIC.BW:\n", i)
         else:
-            print("\nSENT TO TOPIC.COLOR:\n", i)
             producer.send(MARS_COLOR_TOPIC, value=i)
+            print("\nSENT TO TOPIC.COLOR:\n", i)
     # print("res: ", images, v)
 
     s.enter(15, 1, main)  # TODO: set timer to once per day

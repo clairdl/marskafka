@@ -37,8 +37,9 @@ if __name__ == "__main__":
     print("heello???")
     for message in consumer:
         print("\n just consumed this: ", message.value)  # DEBUG
-        img_info = deoldify(message.value["img_src"])
+        img_info = deoldify(message.value["img_src"]) # returns an object with an id and src
         res = {
+          "rover_name": message.value["rover_name"],
           "sol": message.value["sol"],
           "camera": message.value["camera"],
           "img_info": img_info

@@ -53,9 +53,8 @@ if __name__ == "__main__":
     for message in consumer:
         print(message.value)
 
-        # TODO: hardcoded rover name
-        desc = "{} sols into curiosity's mission, we received this picture from its {} camera!".format(
-            message.value["sol"], message.value["camera"]
+        desc = "{} sols into {}'s mission, we received this picture from its {} camera!".format(
+            message.value["sol"], message.value["rover_name"], message.value["camera"]
         )
 
         tweetImg(
