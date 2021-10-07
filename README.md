@@ -1,4 +1,4 @@
-# marskafka - kafka rundown, and implementation post coming out this weekend!
+# marskafka
 
 Marskafka is a distributed kafka network with 3 docker-composed microservices that interact with eachother through kafka's message brokering system. The general flow is:
 1. Images from our dearest little Mars rovers up above, of which the majority are greyscale, are consumed from a NASA API and are filtered between two topics:
