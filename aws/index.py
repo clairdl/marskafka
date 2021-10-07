@@ -5,6 +5,7 @@ import sched
 import random
 from io import BytesIO
 
+import boto3
 import tweepy
 import requests
 from PIL import Image
@@ -56,8 +57,8 @@ def get_images():
         },
     ]
     now = int(time.time())
-    rover_index = 0 if now % 2 == 0 else 1 # pseudo-randomise which rover we query for
-    
+    rover_index = 0 if now % 2 == 0 else 1  # pseudo-randomise which rover we query for
+
     res = requests.get(
         "https://api.nasa.gov/mars-photos/api/v1/rovers/{}/latest_photos?api_key={}".format(
             rovers[rover_index]["name"], os.getenv("NASA_API_KEY")
@@ -67,23 +68,28 @@ def get_images():
 
     # return n whitelisted cam + greyscale images from i's rover
     return [
-            {
-                "rover_name": i["rover"]["name"],
-                "sol": i["sol"],
-                "earth_date": i["earth_date"],
-                "camera": i["camera"]["name"],
-                "img_src": i["img_src"],
-            }
-            for i in res["latest_photos"]
-            if i["camera"]["name"] in rovers[rover_index]["camera_whitelist"]
-            and is_greyscale_probable(i["img_src"])
-        ]
+        {
+            "rover_name": i["rover"]["name"],
+            "sol": i["sol"],
+            "earth_date": i["earth_date"],
+            "camera": i["camera"]["name"],
+            "img_src": i["img_src"],
+        }
+        for i in res["latest_photos"]
+        if i["camera"]["name"] in rovers[rover_index]["camera_whitelist"]
+        and is_greyscale_probable(i["img_src"])
+    ]
 
 
 def send_tweets(tweets):
+    pass
+    print("tweets: ", tweets)
     desc = "{} sols ({}) into {}'s mission, we received these picture from its {} camera!".format(
-            tweets[0]["sol"], tweets[0]["earth_date"], tweets[0]["rover_name"], tweets[0]["camera"]
-        )
+        tweets[0]["sol"],
+        tweets[0]["earth_date"],
+        tweets[0]["rover_name"],
+        tweets[0]["camera"],
+    )
     media_ids = []
     for tweet in tweets:
         filename = "{}.jpg".format(tweet["img_src"]["id"])
@@ -93,14 +99,13 @@ def send_tweets(tweets):
             with open(filename, "wb") as file:
                 for chunk in r:
                     file.write(chunk)
-            media = twitterClient.simple_upload(filename)
+            media = twitter_client.simple_upload(filename)
             media_ids.append(media.media_id)
             os.remove(filename)
         else:
             print("failed at image download or something: ", src)
-    
-    twitterClient.update_status(desc, media_ids=media_ids)
 
+    twitter_client.update_status(desc, media_ids=media_ids)
 
 
 def main():
@@ -110,11 +115,11 @@ def main():
     k = 1 if len(images) < 3 else 3
     # take k random elements
     for i in random.sample(images, k):
-        # deoldify 
+        # print('called deoldify')
         i["img_src"] = deoldify(i["img_src"])
         tweets.append(i)
     # send it!
-    if len(tweets) > 0: 
+    if len(tweets) > 0:
         send_tweets(tweets)
     # reschedule for tomorrow
     s.enter(5, 1, main)
@@ -129,17 +134,9 @@ if __name__ == "__main__":
     auth.set_access_token(
         os.getenv("TWT_ACCESS_TOKEN"), os.getenv("TWT_ACCESS_TOKEN_SECRET")
     )
-    twitterClient = tweepy.API(auth)
+    twitter_client = tweepy.API(auth)
 
-    blacklist = {
-        "1444262388534943744",
-        "1444262425457430533",
-        "1445063845819547653",
-        "1445116483881762824",
-        "1445116622209880072",
-        "1445230777709449217",
-        "1445195520813658113",
-    }
+    s3_client = boto3.client("s3")
 
     s = sched.scheduler(time.time, time.sleep)
     s.enter(1, 1, main)
