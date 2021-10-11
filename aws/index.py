@@ -69,7 +69,6 @@ def get_images():
         )
     )
     res = res.json()
-    print("res:", res)
 
     # return n whitelisted cam + greyscale images from i's rover
     return [
@@ -87,7 +86,6 @@ def get_images():
 
 
 def send_tweets(tweets):
-    pass
     print("tweets: ", tweets)
     desc = "On its {}th sol ({}), the {} rover sent us this!".format(
         tweets[0]["sol"],
@@ -120,21 +118,17 @@ def main():
         k = 1 if len(images) < 3 else 3
         # take k random elements
         for i in random.sample(images, k):
-            # print('called deoldify')
             i["img_src"] = deoldify(i["img_src"])
             tweets.append(i)
         # send it!
         if len(tweets) > 0:
             send_tweets(tweets)
         # reschedule for tomorrow
-        print("tweet complete \n\n\n")
+        print("\n\n tweet complete, scheduled again for tomorrow \n\n")
+        s.enter(86400, 1, main)
     except:
         print('failed: instant sched')
         s.enter(1, 1, main)
-    else:
-
-      print('succeeded: normal sched')
-      s.enter(86400, 1, main)
 
 
 if __name__ == "__main__":
