@@ -56,15 +56,20 @@ def get_images():
             },
         },
     ]
-    now = int(time.time())
-    rover_index = 0 if now % 2 == 0 else 1  # pseudo-randomise which rover we query for
+
+    rover_index = (
+        0 if int(time.time()) % 2 == 0 else 1
+    )  # pseudo-randomise which rover we query for
 
     res = requests.get(
-        "https://api.nasa.gov/mars-photos/api/v1/rovers/{}/latest_photos?api_key={}".format(
-            rovers[rover_index]["name"], os.getenv("NASA_API_KEY")
+        "https://api.nasa.gov/mars-photos/api/v1/rovers/{}/photos?sol={}&api_key={}".format(
+            rovers[rover_index]["name"],
+            random.randint(5, 3000),
+            os.getenv("NASA_API_KEY"),
         )
     )
     res = res.json()
+    print("res:", res)
 
     # return n whitelisted cam + greyscale images from i's rover
     return [
@@ -75,7 +80,7 @@ def get_images():
             "camera": i["camera"]["name"],
             "img_src": i["img_src"],
         }
-        for i in res["latest_photos"]
+        for i in res["photos"]
         if i["camera"]["name"] in rovers[rover_index]["camera_whitelist"]
         and is_greyscale_probable(i["img_src"])
     ]
@@ -84,11 +89,10 @@ def get_images():
 def send_tweets(tweets):
     pass
     print("tweets: ", tweets)
-    desc = "{} sols ({}) into {}'s mission, we received these picture from its {} camera!".format(
+    desc = "On its {}th sol ({}), the {} rover sent us this!".format(
         tweets[0]["sol"],
         tweets[0]["earth_date"],
         tweets[0]["rover_name"],
-        tweets[0]["camera"],
     )
     media_ids = []
     for tweet in tweets:
@@ -109,20 +113,28 @@ def send_tweets(tweets):
 
 
 def main():
-    images = get_images()
-    tweets = []
-    # set sample size
-    k = 1 if len(images) < 3 else 3
-    # take k random elements
-    for i in random.sample(images, k):
-        # print('called deoldify')
-        i["img_src"] = deoldify(i["img_src"])
-        tweets.append(i)
-    # send it!
-    if len(tweets) > 0:
-        send_tweets(tweets)
-    # reschedule for tomorrow
-    s.enter(5, 1, main)
+    try:
+        images = get_images()
+        tweets = []
+        # set sample size
+        k = 1 if len(images) < 3 else 3
+        # take k random elements
+        for i in random.sample(images, k):
+            # print('called deoldify')
+            i["img_src"] = deoldify(i["img_src"])
+            tweets.append(i)
+        # send it!
+        if len(tweets) > 0:
+            send_tweets(tweets)
+        # reschedule for tomorrow
+        print("tweet complete \n\n\n")
+    except:
+        print('failed: instant sched')
+        s.enter(1, 1, main)
+    else:
+
+      print('succeeded: normal sched')
+      s.enter(86400, 1, main)
 
 
 if __name__ == "__main__":
