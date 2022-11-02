@@ -1,6 +1,6 @@
 # marskafka
 
-Marskafka is a Kafka data processing pipeline that uses deep learning to colorize & [tweet images](https://twitter.com/marskafka) from NASA’s Mars Rover API
+Marskafka is a Kafka data processing pipeline that uses deep learning with Kafka to colorize & [tweet images](https://twitter.com/marskafka) from NASA’s Mars Rover API
 1. Images from our Mars Rovers are consumed from NASA's API and are filtered between two topics:
 - `queue.bwimg` for greyscale images
 - `stream.colorimg` for RGB images
