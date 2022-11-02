@@ -19,7 +19,4 @@ I built this to learn about distributed computing, publish/subscribe models, and
 
 ## Notes
 - i had initially wanted to deploy and expose my own instance of [deoldify](https://github.com/jantic/DeOldify) and use my own API keys
-- however, i misjudged the complexity of this task:
-
-![meme](https://i.ibb.co/6NwZ806/5ornlp.jpg)
-- so i'm temporarily using [this api](https://deepai.org/machine-learning-model/colorizer) for my colorization needs, as i don't have the time to dive into MLOps with AWS Lambda, and AWS SageMaker, 
+but i'm temporarily using [this api](https://deepai.org/machine-learning-model/colorizer) for my colorization needs, as i don't have the time to dive into MLOps with AWS Lambda, and AWS SageMaker, 
